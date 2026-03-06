@@ -11,10 +11,15 @@ func Setup() *gin.Engine {
 
 	qrHandler := handlers.NewQRHandler()
 
-	r.GET("/api/qr", qrHandler.Generate)
+	api := r.Group("/api")
+
+	api.GET("/qr", qrHandler.Generate)
+	api.POST("/qr", qrHandler.Create)
+
+	r.GET("/q/:id", qrHandler.Resolve)
+
 	r.Static("/static", "./web/static")
 
-	// index
 	r.GET("/", func(c *gin.Context) {
 		c.File("./web/index.html")
 	})

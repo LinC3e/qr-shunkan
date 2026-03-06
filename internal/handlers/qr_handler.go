@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/LinC3e/shunkan-qr/internal/qr"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,34 +21,70 @@ func NewQRHandler() *QRHandler {
 
 func (h *QRHandler) Generate(c *gin.Context) {
 
-	url := c.Query("url")
-	sizeParam := c.Query("size")
+	inputURL := c.Query("url")
+	sizeParam := c.DefaultQuery("size", "256")
+	format := c.DefaultQuery("format", "png")
 
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "url is required",
-		})
+	if inputURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
 		return
 	}
 
-	size := 256
-
-	if sizeParam != "" {
-		s, err := strconv.Atoi(sizeParam)
-		if err == nil {
-			size = s
-		}
+	_, err := url.ParseRequestURI(inputURL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
+		return
 	}
 
-	png, err := h.service.Generate(url, size)
+	size, err := strconv.Atoi(sizeParam)
+	if err != nil {
+		size = 256
+	}
+
+	data, err := h.service.Generate(inputURL, size, format)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed generating qr",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed generating qr"})
 		return
 	}
 
-	c.Data(http.StatusOK, "image/png", png)
+	if format == "svg" {
+		c.Data(200, "image/svg+xml", data)
+		return
+	}
 
+	c.Data(200, "image/png", data)
+}
+
+func (h *QRHandler) Create(c *gin.Context) {
+
+	var body struct {
+		URL string `json:"url"`
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"error": "invalid body"})
+		return
+	}
+
+	id := h.service.Create(body.URL)
+
+	c.JSON(200, gin.H{
+		"id": id,
+		"qr": "/q/" + id,
+	})
+}
+
+func (h *QRHandler) Resolve(c *gin.Context) {
+
+	id := c.Param("id")
+
+	url, ok := h.service.Get(id)
+
+	if !ok {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+
+	c.Redirect(302, url)
 }
