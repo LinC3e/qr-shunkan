@@ -1,22 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<title>QR Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generador de QR - Prueba</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 1rem 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #result {
+      margin-top: 2rem;
+    }
+    #qr-image {
+      max-width: 250px;
+      margin: 1rem auto;
+      display: block;
+    }
+    #info {
+      color: #555;
+      font-size: 0.95rem;
+    }
+    .error {
+      color: #dc3545;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
-
 <body>
 
-<h1>QR Generator</h1>
+  <div class="container">
+    <h1>Generador de QR</h1>
+    
+    <input type="text" id="content" placeholder="Pega un link, texto o lo que quieras..." />
+    <button onclick="generateQR()">Generar QR</button>
 
-<input id="url" placeholder="https://example.com">
+    <div id="result">
+      <img id="qr-image" src="" alt="Tu QR aparecerá aquí" style="display:none;" />
+      <div id="info"></div>
+      <div id="error" class="error"></div>
+    </div>
+  </div>
 
-<button onclick="generateQR()">Generate</button>
+  <script>
+    async function generateQR() {
+      const content = document.getElementById('content').value.trim();
+      const errorDiv = document.getElementById('error');
+      const infoDiv = document.getElementById('info');
+      const qrImg = document.getElementById('qr-image');
 
-<div>
-<img id="qr">
-</div>
+      errorDiv.textContent = '';
+      infoDiv.textContent = '';
+      qrImg.style.display = 'none';
 
-<script src="../static/app..js"></script>
+      if (!content) {
+        errorDiv.textContent = 'URL required.';
+        return;
+      }
 
+      try {
+        const response = await fetch('/api/qrs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Error generating QR');
+        }
+
+        const data = await response.json();
+        
+        infoDiv.innerHTML = `
+          <strong>ID:</strong> ${data.id}<br>
+          <strong>Contenido:</strong> ${data.content}<br>
+          <strong>Creado:</strong> ${new Date(data.created_at).toLocaleString()}
+        `;
+
+        // QR  (only test)
+        const previewUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(content)}&size=250x250`;
+        qrImg.src = previewUrl;
+        qrImg.style.display = 'block';
+
+      } catch (err) {
+        errorDiv.textContent = err.message;
+        console.error(err);
+      }
+    }
+
+    document.getElementById('content').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') generateQR();
+    });
+  </script>
 </body>
 </html>

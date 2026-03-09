@@ -1,28 +1,22 @@
 package router
 
 import (
-	"github.com/LinC3e/shunkan-qr/internal/handlers"
 	"github.com/gin-gonic/gin"
+
+	handler "github.com/LinC3e/shunkan-qr/internal/handlers"
 )
 
-func Setup() *gin.Engine {
-
+func Setup(qrHandler *handler.QRHandler) *gin.Engine {
 	r := gin.Default()
 
-	qrHandler := handlers.NewQRHandler()
+	r.Static("/static", "./web/static")
+	r.StaticFile("/", "./web/index.html")
 
 	api := r.Group("/api")
-
-	api.GET("/qr", qrHandler.Generate)
-	api.POST("/qr", qrHandler.Create)
-
-	r.GET("/q/:id", qrHandler.Resolve)
-
-	r.Static("/static", "./web/static")
-
-	r.GET("/", func(c *gin.Context) {
-		c.File("./web/index.html")
-	})
+	{
+		api.POST("/qrs", qrHandler.CreateQR)
+		api.GET("/qrs/:id", qrHandler.GetQR)
+	}
 
 	return r
 }

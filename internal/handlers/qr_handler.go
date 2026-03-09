@@ -1,90 +1,51 @@
-package handlers
+package handler
 
 import (
 	"net/http"
-	"net/url"
-	"strconv"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/LinC3e/shunkan-qr/internal/qr"
-	"github.com/gin-gonic/gin"
 )
 
 type QRHandler struct {
 	service *qr.Service
 }
 
-func NewQRHandler() *QRHandler {
-	return &QRHandler{
-		service: qr.NewService(),
-	}
+func NewQRHandler(service *qr.Service) *QRHandler {
+	return &QRHandler{service: service}
 }
 
-func (h *QRHandler) Generate(c *gin.Context) {
+func (h *QRHandler) CreateQR(c *gin.Context) {
+	var req struct {
+		Content string `json:"content" binding:"required"`
+	}
 
-	inputURL := c.Query("url")
-	sizeParam := c.DefaultQuery("size", "256")
-	format := c.DefaultQuery("format", "png")
-
-	if inputURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	_, err := url.ParseRequestURI(inputURL)
+	qr, err := h.service.CreateQR(c.Request.Context(), req.Content)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	size, err := strconv.Atoi(sizeParam)
-	if err != nil {
-		size = 256
-	}
-
-	data, err := h.service.Generate(inputURL, size, format)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed generating qr"})
-		return
-	}
-
-	if format == "svg" {
-		c.Data(200, "image/svg+xml", data)
-		return
-	}
-
-	c.Data(200, "image/png", data)
+	c.JSON(http.StatusCreated, qr)
 }
 
-func (h *QRHandler) Create(c *gin.Context) {
-
-	var body struct {
-		URL string `json:"url"`
-	}
-
-	if err := c.BindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": "invalid body"})
-		return
-	}
-
-	id := h.service.Create(body.URL)
-
-	c.JSON(200, gin.H{
-		"id": id,
-		"qr": "/q/" + id,
-	})
-}
-
-func (h *QRHandler) Resolve(c *gin.Context) {
-
+func (h *QRHandler) GetQR(c *gin.Context) {
 	id := c.Param("id")
-
-	url, ok := h.service.Get(id)
-
-	if !ok {
-		c.JSON(404, gin.H{"error": "not found"})
+	qr, err := h.service.GetQR(c.Request.Context(), id)
+	if err != nil {
+		if err.Error() == "qr not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "QR not found"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.Redirect(302, url)
+	c.JSON(http.StatusOK, qr)
 }
