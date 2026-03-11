@@ -98,3 +98,29 @@ func (h *Handler) ResolveQR(c *gin.Context) {
 
 	c.JSON(http.StatusOK, qr)
 }
+
+func (h *Handler) GetStats(c *gin.Context) {
+
+	id := c.Param("id")
+
+	stats, err := h.analytics.GetStats(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "failed to get stats"})
+		return
+	}
+
+	c.JSON(200, stats)
+}
+
+func (h *Handler) GetDailyStats(c *gin.Context) {
+
+	id := c.Param("id")
+
+	stats, err := h.analytics.GetDailyStats(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "failed to get daily stats"})
+		return
+	}
+
+	c.JSON(200, stats)
+}

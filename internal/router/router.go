@@ -14,9 +14,14 @@ func Setup(qrHandler *qr.Handler) *gin.Engine {
 
 	api := r.Group("/api")
 	{
+		// QR
 		api.GET("/qrs", qrHandler.ListQRs)
 		api.GET("/qrs/:id", qrHandler.GetQR)
 		api.POST("/qrs", qrHandler.CreateQR)
+
+		// QR analytics
+		api.GET("/qrs/:id/stats", qrHandler.GetStats)
+		api.GET("/qrs/:id/stats/daily", qrHandler.GetDailyStats)
 	}
 
 	// PUBLIC QR ROUTE
