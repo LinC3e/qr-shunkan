@@ -8,6 +8,7 @@ import (
 )
 
 type Repository interface {
+	List(ctx context.Context) ([]QR, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*QR, error)
 	GetBySlug(ctx context.Context, slug string) (*QR, error)
 	Create(ctx context.Context, qr *QR) error
@@ -20,6 +21,51 @@ type postgresRepo struct {
 
 func NewRepository(db *sql.DB) Repository {
 	return &postgresRepo{db: db}
+}
+
+func (r *postgresRepo) List(ctx context.Context) ([]QR, error) {
+
+	query := `
+		SELECT id, slug, content, type,
+	  scan_count, is_active, created_at, updated_at
+		FROM qrs
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var qrs []QR
+
+	for rows.Next() {
+		var qr QR
+
+		err := rows.Scan(
+			&qr.ID,
+			&qr.Slug,
+			&qr.Content,
+			&qr.Type,
+			&qr.ScanCount,
+			&qr.IsActive,
+			&qr.CreatedAt,
+			&qr.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		qrs = append(qrs, qr)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return qrs, nil
 }
 
 func (r *postgresRepo) GetByID(ctx context.Context, id uuid.UUID) (*QR, error) {
