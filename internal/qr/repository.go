@@ -29,7 +29,7 @@ func (r *postgresRepo) List(ctx context.Context) ([]QR, error) {
 		SELECT id, slug, content, type,
 	  scan_count, is_active, created_at, updated_at
 		FROM qrs
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC;
 	`
 
 	rows, err := r.db.QueryContext(ctx, query)
@@ -76,7 +76,7 @@ func (r *postgresRepo) GetByID(ctx context.Context, id uuid.UUID) (*QR, error) {
 		scan_count, is_active,
 		created_at, updated_at
 	FROM qrs
-	WHERE id = $1
+	WHERE id = $1;
 	`
 
 	qr := &QR{}
@@ -107,7 +107,7 @@ func (r *postgresRepo) GetBySlug(ctx context.Context, slug string) (*QR, error) 
 		scan_count, is_active,
 		created_at, updated_at
 	FROM qrs
-	WHERE slug = $1
+	WHERE slug = $1;
 	`
 
 	qr := &QR{}
@@ -135,7 +135,7 @@ func (r *postgresRepo) IncrementScan(ctx context.Context, id string) error {
 	query := `
 	UPDATE qrs
 	SET scan_count = scan_count + 1
-	WHERE id = $1
+	WHERE id = $1;
 	`
 
 	_, err := r.db.ExecContext(ctx, query, id)
@@ -151,7 +151,7 @@ func (r *postgresRepo) Create(ctx context.Context, qr *QR) error {
 		scan_count, is_active,
 		created_at, updated_at
 	)
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 	`
 
 	_, err := r.db.ExecContext(

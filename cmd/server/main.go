@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/LinC3e/shunkan-qr/internal/analytics"
 	"github.com/LinC3e/shunkan-qr/internal/config"
 	"github.com/LinC3e/shunkan-qr/internal/database"
 	"github.com/LinC3e/shunkan-qr/internal/qr"
@@ -27,7 +28,10 @@ func main() {
 
 	repo := qr.NewRepository(db)
 	service := qr.NewService(repo)
-	qrHandler := qr.NewHandler(service)
+	analyticsRepo := analytics.NewRepository(db)
+	analyticsService := analytics.NewService(analyticsRepo)
+
+	qrHandler := qr.NewHandler(service, analyticsService)
 	r := router.Setup(qrHandler)
 
 	srv := &http.Server{

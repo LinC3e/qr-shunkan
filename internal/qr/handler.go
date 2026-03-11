@@ -3,15 +3,20 @@ package qr
 import (
 	"net/http"
 
+	"github.com/LinC3e/shunkan-qr/internal/analytics"
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	service *Service
+	service   *Service
+	analytics *analytics.Service
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, analytics *analytics.Service) *Handler {
+	return &Handler{
+		service:   service,
+		analytics: analytics,
+	}
 }
 
 type CreateQRRequest struct {
@@ -76,6 +81,19 @@ func (h *Handler) ResolveQR(c *gin.Context) {
 			"error": "qr not found",
 		})
 		return
+	}
+
+	// analytics
+	ip := c.ClientIP()
+	ua := c.Request.UserAgent()
+
+	if h.analytics != nil {
+		_ = h.analytics.RegisterScan(
+			c.Request.Context(),
+			qr.ID.String(),
+			ip,
+			ua,
+		)
 	}
 
 	c.JSON(http.StatusOK, qr)
