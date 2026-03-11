@@ -54,3 +54,18 @@ func (h *Handler) GetQR(c *gin.Context) {
 
 	c.JSON(http.StatusOK, qr)
 }
+
+func (h *Handler) ResolveQR(c *gin.Context) {
+
+	slug := c.Param("slug")
+
+	qr, err := h.service.ResolveQR(c.Request.Context(), slug)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "qr not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, qr)
+}

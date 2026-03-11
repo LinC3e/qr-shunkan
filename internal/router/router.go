@@ -18,5 +18,8 @@ func Setup(qrHandler *qr.Handler) *gin.Engine {
 		api.GET("/qrs/:id", qrHandler.GetQR)
 	}
 
+	// PUBLIC QR ROUTE
+	r.GET("/qr/:slug", qrHandler.ResolveQR)
+
 	return r
 }

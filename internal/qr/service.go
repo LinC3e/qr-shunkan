@@ -89,3 +89,30 @@ func (s *Service) GetQR(ctx context.Context, id string) (*QR, error) {
 
 	return s.repo.GetByID(ctx, uid)
 }
+
+func (s *Service) ResolveQR(ctx context.Context, slug string) (*QR, error) {
+
+	qr, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	if !qr.IsActive {
+		return nil, errors.New("qr inactive")
+	}
+
+	if qr.MaxScans != nil && qr.ScanCount >= *qr.MaxScans {
+		return nil, errors.New("scan limit reached")
+	}
+
+	if qr.ExpiresAt != nil && time.Now().After(*qr.ExpiresAt) {
+		return nil, errors.New("qr expired")
+	}
+
+	err = s.repo.IncrementScan(ctx, qr.ID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return qr, nil
+}
