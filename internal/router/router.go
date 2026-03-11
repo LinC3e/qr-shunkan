@@ -3,10 +3,10 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	handler "github.com/LinC3e/shunkan-qr/internal/handlers"
+	"github.com/LinC3e/shunkan-qr/internal/qr"
 )
 
-func Setup(qrHandler *handler.QRHandler) *gin.Engine {
+func Setup(qrHandler *qr.Handler) *gin.Engine {
 	r := gin.Default()
 
 	r.Static("/static", "./web/static")

@@ -11,12 +11,12 @@ import (
 
 	"github.com/LinC3e/shunkan-qr/internal/config"
 	"github.com/LinC3e/shunkan-qr/internal/database"
-	handler "github.com/LinC3e/shunkan-qr/internal/handlers"
 	"github.com/LinC3e/shunkan-qr/internal/qr"
 	"github.com/LinC3e/shunkan-qr/internal/router"
 )
 
 func main() {
+
 	cfg := config.Load()
 
 	db, err := database.New(cfg.DatabaseURL)
@@ -25,11 +25,9 @@ func main() {
 	}
 	defer db.Close()
 
-	// Repos → Service → Handler
 	repo := qr.NewRepository(db)
 	service := qr.NewService(repo)
-	qrHandler := handler.NewQRHandler(service)
-
+	qrHandler := qr.NewHandler(service)
 	r := router.Setup(qrHandler)
 
 	srv := &http.Server{
@@ -37,25 +35,27 @@ func main() {
 		Handler: r,
 	}
 
-	// Init server goroutine
 	go func() {
-		log.Printf("Server on in http://localhost:%s", cfg.Port)
+		log.Printf("Server running on http://localhost:%s", cfg.Port)
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error server init: %v", err)
+			log.Fatalf("Server error: %v", err)
 		}
 	}()
 
 	// shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	<-quit
-	log.Println("Shutdown server...")
+	log.Println("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Error in shutdown:", err)
+		log.Fatal("Shutdown error:", err)
 	}
 
-	log.Println("Server Stop. Ok")
+	log.Println("Server stopped")
 }
