@@ -14,6 +14,7 @@ import (
 	"github.com/LinC3e/shunkan-qr/internal/database"
 	"github.com/LinC3e/shunkan-qr/internal/qr"
 	"github.com/LinC3e/shunkan-qr/internal/router"
+	"github.com/LinC3e/shunkan-qr/internal/utils"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 		log.Fatalf("Error connecting to DB: %v", err)
 	}
 	defer db.Close()
+	utils.InitGeoDB("GeoLite2-Country.mmdb")
+	log.Print("Country db.")
 
 	repo := qr.NewRepository(db)
 	service := qr.NewService(repo)
