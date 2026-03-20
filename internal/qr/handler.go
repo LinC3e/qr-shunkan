@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/LinC3e/shunkan-qr/internal/analytics"
+	"github.com/LinC3e/shunkan-qr/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -83,9 +84,12 @@ func (h *Handler) ResolveQR(c *gin.Context) {
 		return
 	}
 
-	// analytics
 	ip := c.ClientIP()
 	ua := c.Request.UserAgent()
+
+	// utils
+	device, browser := utils.ParseUserAgent(ua)
+	country := utils.GetCountry(ip)
 
 	if h.analytics != nil {
 		_ = h.analytics.RegisterScan(
@@ -93,6 +97,9 @@ func (h *Handler) ResolveQR(c *gin.Context) {
 			qr.ID.String(),
 			ip,
 			ua,
+			country,
+			device,
+			browser,
 		)
 	}
 

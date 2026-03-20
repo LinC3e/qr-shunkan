@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"net/netip"
 
 	"github.com/oschwald/geoip2-golang/v2"
@@ -21,9 +20,14 @@ func GetCountry(ip string) string {
 		return "Unknown"
 	}
 
+	// for local
+	if ip == "::1" || ip == "127.0.0.1" {
+		ip = "8.8.8.8"
+	}
+
 	parsedIP, err := netip.ParseAddr(ip)
 	if err != nil {
-		log.Fatal(err)
+		return "Unknown"
 	}
 
 	record, err := geoDB.Country(parsedIP)

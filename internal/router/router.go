@@ -22,6 +22,9 @@ func Setup(qrHandler *qr.Handler) *gin.Engine {
 		// QR analytics
 		api.GET("/qrs/:id/stats", qrHandler.GetStats)
 		api.GET("/qrs/:id/stats/daily", qrHandler.GetDailyStats)
+		/* 		api.GET("/qrs/:id/stats/countries", qrHandler.GetCountryStats)
+		   		api.GET("/qrs/:id/stats/devices", qrHandler.GetDeviceStats)
+		   		api.GET("/qrs/:id/stats/browsers", qrHandler.GetBrowserStats) */
 	}
 
 	// PUBLIC QR ROUTE

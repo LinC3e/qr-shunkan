@@ -18,6 +18,14 @@ func (s *Service) GetDailyStats(ctx context.Context, qrID string) ([]DailyStats,
 	return s.repo.GetDailyStats(ctx, qrID)
 }
 
-func (s *Service) RegisterScan(ctx context.Context, qrID string, ip string, ua string) error {
-	return s.repo.CreateScan(ctx, qrID, ip, ua)
+func (s *Service) RegisterScan(
+	ctx context.Context,
+	qrID string,
+	ip string,
+	ua string,
+	country string,
+	device string,
+	browser string,
+) error {
+	return s.repo.CreateScan(ctx, qrID, ip, ua, country, device, browser)
 }

@@ -8,7 +8,7 @@ import (
 type Repository interface {
 	GetStats(ctx context.Context, qrID string) (*Stats, error)
 	GetDailyStats(ctx context.Context, qrID string) ([]DailyStats, error)
-	CreateScan(ctx context.Context, qrID string, ip string, ua string) error
+	CreateScan(ctx context.Context, qrID, ip, ua, country, device, browser string) error
 }
 
 type postgresRepo struct {
@@ -88,13 +88,38 @@ func (r *postgresRepo) GetDailyStats(ctx context.Context, qrID string) ([]DailyS
 	return stats, nil
 }
 
-func (r *postgresRepo) CreateScan(ctx context.Context, qrID string, ip string, ua string) error {
+func (r *postgresRepo) CreateScan(
+	ctx context.Context,
+	qrID string,
+	ip string,
+	ua string,
+	country string,
+	device string,
+	browser string,
+) error {
 
 	query := `
-		INSERT INTO qr_scans (qr_id, ip_address, user_agent)
-		VALUES ($1,$2,$3)
+	INSERT INTO qr_scans (
+		qr_id,
+		ip_address,
+		user_agent,
+		country,
+		device,
+		browser
+	)
+	VALUES ($1,$2,$3,$4,$5,$6)
 	`
 
-	_, err := r.db.ExecContext(ctx, query, qrID, ip, ua)
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		qrID,
+		ip,
+		ua,
+		country,
+		device,
+		browser,
+	)
+
 	return err
 }
